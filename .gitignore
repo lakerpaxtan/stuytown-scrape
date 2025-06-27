@@ -1,0 +1,5 @@
+**.claude
+**.json
+
+# Email configuration (contains sensitive credentials)
+config.py
