@@ -7,11 +7,9 @@ A Python scraper that monitors StuyTown's website for new apartment listings and
 - 🔍 Monitors StuyTown website for 1-2 bedroom apartments
 - 📧 Email notifications to multiple recipients  
 - 💾 JSON persistence of seen apartments using address as unique key
-- 📊 Comprehensive logging with timestamp tracking
 - 🔄 Automatic scrolling to load all dynamic content
 - 🔗 Individual apartment URL extraction from listing details
 - ⚙️ Three operation modes: monitoring, initial setup, email testing
-- ✅ Data validation to skip incomplete listings
 
 ## How It Works
 
@@ -26,16 +24,6 @@ The scraper uses **Selenium WebDriver** to handle StuyTown's dynamic JavaScript-
 5. **Change Detection**: Compares current listings against stored apartments using address as unique identifier
 6. **Notifications**: Sends email alerts for any newly discovered apartments
 7. **Persistence**: Updates JSON file with current apartment state
-
-### CSS Selectors Used
-
-The scraper targets these specific CSS classes on StuyTown's website:
-- `.bG_cM` - Main apartment listing containers
-- `.bG_2` - Bedroom/bathroom information  
-- `.bG_cQ` - Full apartment address (used as unique key)
-- `.bG_bz` - Availability status
-- `.bG_jY` - Rental price
-- `.bG_ct` - Details link for individual apartment URL
 
 ### Data Flow
 
@@ -191,17 +179,3 @@ Each apartment in `apartments.json` contains:
   "url": "https://www.stuytown.com/nyc-apartments-for-rent/unit/?unitSpk=..."
 }
 ```
-
-## Technical Details
-
-### Text Extraction Method
-Uses `get_attribute('textContent')` instead of `.text` for reliable text extraction from dynamically loaded elements.
-
-### Scrolling Algorithm
-Implements intelligent scrolling that:
-- Detects when page height stops changing
-- Has safety limit (50 scrolls max)
-- Waits 2 seconds between scrolls for content loading
-
-### Data Validation
-Skips apartments missing required fields (address or price) to ensure data quality.
