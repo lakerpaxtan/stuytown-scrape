@@ -1,5 +1,5 @@
 **.claude
 **.json
-
+**__pycache__
 # Email configuration (contains sensitive credentials)
 config.py

@@ -5,7 +5,10 @@ Monitors StuyTown website for new apartment listings and sends email notificatio
 import argparse
 import json
 import logging
+import os
 import smtplib
+import subprocess
+import sys
 import time
 from datetime import datetime
 from email.mime.text import MIMEText
@@ -36,10 +39,11 @@ CHECK_INTERVAL = 30  # seconds
 
 
 class StuyTownScraper:
-    def __init__(self):
+    def __init__(self, play_sound=False):
         self.apartments_file = Path(APARTMENTS_FILE)
         self.known_apartments = self.load_existing_apartments()
         self.driver = None
+        self.play_sound = play_sound
         
     def load_existing_apartments(self) -> Dict[str, Dict]:
         """Load existing apartments from JSON file."""
@@ -199,15 +203,44 @@ class StuyTownScraper:
         LOGGER.info(f"Successfully extracted {len(apartments)} apartments")
         return apartments
     
-    def send_email_notification(self, new_apartments: List[Dict] = None, test_mode: bool = False):
-        """Send email notification for new apartments or test email."""
+    def play_notification_sounds(self):
+        """Play notification sound to wake up user."""
+        try:
+            for i in range(6):
+                if sys.platform == "darwin":  # macOS
+                    # Use system beep sound
+                    subprocess.run(["afplay", "/System/Library/Sounds/Glass.aiff"], check=False)
+                elif sys.platform == "linux":  # Linux
+                    # Use system beep
+                    subprocess.run(["aplay", "/usr/share/sounds/alsa/Front_Left.wav"], check=False)
+                elif sys.platform == "win32":  # Windows
+                    # Use system beep
+                    import winsound
+                    winsound.Beep(1000, 1000)  # 1000Hz for 1000ms
+                else:
+                    # Fallback - terminal bell
+                    print("\a" * 5)  # Multiple bell characters
+                
+                time.sleep(0.1)
+
+            LOGGER.info("Notification sounds played")
+        except Exception as e:
+            LOGGER.warning(f"Could not play notification sound: {e}")
+            # Fallback to terminal bell
+            print("\a" * 5)
+
+    def send_notification(self, new_apartments: List[Dict] = None, test_mode: bool = False):
+        """Send notifications (email + optional sound) for new apartments or test."""
         if not new_apartments and not test_mode:
             return
             
+        # Send email notification
         try:
             if test_mode:
-                subject = "🧪 StuyTown Scraper Test Email"
-                body = "This is a test email from your StuyTown apartment scraper.\n\nIf you received this, email notifications are working correctly!"
+                subject = "🧪 StuyTown Scraper Test Notification"
+                body = "This is a test notification from your StuyTown apartment scraper.\n\nIf you received this, notifications are working correctly!"
+                if self.play_sound:
+                    body += "\n\nSound notification should have also played."
             else:
                 subject = f"🏠 {len(new_apartments)} New StuyTown Apartment(s) Found!"
                 body = "New apartments available at StuyTown:\n\n"
@@ -236,6 +269,10 @@ class StuyTownScraper:
             
         except Exception as e:
             LOGGER.error(f"Error sending email notification: {e}")
+        
+        # Play sound notification if enabled
+        if self.play_sound:
+            self.play_notification_sounds()
     
     def check_for_new_apartments(self):
         """Check for new apartments and update known listings."""
@@ -275,7 +312,7 @@ class StuyTownScraper:
             # Send notifications for new apartments
             if new_apartments:
                 LOGGER.info(f"Found {len(new_apartments)} new apartments!")
-                self.send_email_notification(new_apartments)
+                self.send_notification(new_apartments)
             else:
                 LOGGER.info("No new apartments found")
                 
@@ -317,10 +354,10 @@ class StuyTownScraper:
                 self.driver.quit()
                 LOGGER.info("Driver closed")
     
-    def test_email(self):
-        """Send a test email to verify email configuration."""
-        LOGGER.info("Sending test email")
-        self.send_email_notification(test_mode=True)
+    def test_notification(self):
+        """Send a test notification to verify configuration."""
+        LOGGER.info("Sending test notification")
+        self.send_notification(test_mode=True)
     
     def run(self):
         """Main monitoring loop."""
@@ -348,17 +385,19 @@ def main():
     parser = argparse.ArgumentParser(description='StuyTown Apartment Scraper')
     parser.add_argument('--save-apartments', action='store_true', 
                         help='Save current apartments without checking for new ones (initial setup)')
-    parser.add_argument('--test-email', action='store_true',
-                        help='Send a test email to verify email configuration')
+    parser.add_argument('--test-notification', action='store_true',
+                        help='Send a test notification to verify configuration')
+    parser.add_argument('--sound', action='store_true',
+                        help='Play sound notification when new apartments are found')
     
     args = parser.parse_args()
     
-    scraper = StuyTownScraper()
+    scraper = StuyTownScraper(play_sound=args.sound)
     
     if args.save_apartments:
         scraper.save_initial_apartments()
-    elif args.test_email:
-        scraper.test_email()
+    elif args.test_notification:
+        scraper.test_notification()
     else:
         scraper.run()
 

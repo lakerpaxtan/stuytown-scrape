@@ -1,15 +1,16 @@
 # StuyTown Apartment Scraper
 
-A Python scraper that monitors StuyTown's website for new apartment listings and sends email notifications when new apartments become available.
+A Python scraper that monitors StuyTown's website for new apartment listings and sends email and optional sound notifications when new apartments become available.
 
 ## Features
 
 - 🔍 Monitors StuyTown website for 1-2 bedroom apartments
 - 📧 Email notifications to multiple recipients  
+- 🔊 Optional sound notifications to wake you up
 - 💾 JSON persistence of seen apartments using address as unique key
 - 🔄 Automatic scrolling to load all dynamic content
 - 🔗 Individual apartment URL extraction from listing details
-- ⚙️ Three operation modes: monitoring, initial setup, email testing
+- ⚙️ Three operation modes: monitoring, initial setup, notification testing
 
 ## How It Works
 
@@ -22,7 +23,7 @@ The scraper uses **Selenium WebDriver** to handle StuyTown's dynamic JavaScript-
 3. **Content Discovery**: Scrolls through entire page to trigger lazy-loading of all apartments
 4. **Data Extraction**: Uses CSS selectors to extract apartment details from each listing container
 5. **Change Detection**: Compares current listings against stored apartments using address as unique identifier
-6. **Notifications**: Sends email alerts for any newly discovered apartments
+6. **Notifications**: Sends email alerts and optional sound notifications for any newly discovered apartments
 7. **Persistence**: Updates JSON file with current apartment state
 
 ### Data Flow
@@ -98,6 +99,13 @@ python main.py
 - Updates apartments.json with current state
 - Runs indefinitely until stopped with Ctrl+C
 
+**With Sound Notifications:**
+```bash
+python main.py --sound
+```
+- Same as above but also plays notification sounds when new apartments are found
+- Designed to wake you up - plays system sounds on macOS/Linux/Windows
+
 ### 2. Initial Setup Mode
 Saves current apartments without sending notifications:
 ```bash
@@ -108,14 +116,20 @@ python main.py --save-apartments
 - Extracts all current listings and saves to apartments.json
 - Exits after completion
 
-### 3. Email Test Mode  
-Sends a test email to verify configuration:
+### 3. Notification Test Mode  
+Sends a test notification to verify configuration:
 ```bash
-python main.py --test-email
+python main.py --test-notification
 ```
 - Sends test email to all recipients in `EMAIL_TO` list
 - Verifies SMTP settings and Gmail App Password
-- Exits after sending test email
+- If using `--sound` flag, also tests sound notification
+- Exits after sending test notification
+
+**Test with Sound:**
+```bash
+python main.py --test-notification --sound
+```
 
 ## Usage Workflow
 
@@ -126,17 +140,24 @@ python main.py --test-email
    python main.py --save-apartments
    ```
 
-2. **Test Email Configuration**:
+2. **Test Notification Configuration**:
    ```bash
-   python main.py --test-email
+   python main.py --test-notification
    ```
 
-3. **Start Monitoring**:
+3. **Test with Sound** (optional):
    ```bash
-   python main.py
+   python main.py --test-notification --sound
    ```
 
-4. **Stop with Ctrl+C** when needed
+4. **Start Monitoring**:
+   ```bash
+   python main.py --sound  # With sound to wake you up
+   # OR
+   python main.py          # Email only
+   ```
+
+5. **Stop with Ctrl+C** when needed
 
 ## Configuration
 
